@@ -25,6 +25,8 @@ The threshold represents the absolute change in value before a new output value 
 reported. The Interval Rate sets the data output display rate in 1.9ms steps(1/512 
 Hz clock). For example, a value of 1 = 1.95 ms delay, 2 = 3.9 ms delay and so on.
 
+The demo program was modified by GT to capture the data stream and write it to a json file. 
+
 QSB ON WINDOWS
 --------------------------
 A QSB device will enumerate on a Windows system as a virtual COM port.
