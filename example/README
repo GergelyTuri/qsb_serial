@@ -1,0 +1,103 @@
+QSB streamQSB Python Demo
+
+
+DESCRIPTION
+-----------
+
+The file streamQSB.py is provided to demonstrate how to communicate with a
+QSB device. The progam displays a streamed encoder count value and a timestamp
+to the terminal until the user presses q or Ctrl-C.  The timestamp is the 
+elapsed time since the QSB timestamp was reset or since the application was
+started. 
+
+The demo has been tested to work on Windows 10, Linux Ubuntu 22.04.3 LTS
+(jammy), and Raspberry Pi 4, but should work similarly in other Debian-based distributions. 
+
+The demo connects to an attached QSB and configures it to read an encoder in 
+quadrature mode, X4 counter mode, index disabled, modulo-N, counter enabled, 
+and the counter preset register set to 1999.  This will allow the counter to 
+count up to 2000 pulses before restarting at 0. 
+
+A QSB can be configured to stream encoder count values to a host application
+by writing values to the Threshold and Interval Rate registers and then submitting
+a stream data request.  In this demo, a value of zero is written to both registers. 
+The threshold represents the absolute change in value before a new output value is
+reported. The Interval Rate sets the data output display rate in 1.9ms steps(1/512 
+Hz clock). For example, a value of 1 = 1.95 ms delay, 2 = 3.9 ms delay and so on.
+
+QSB ON WINDOWS
+--------------------------
+A QSB device will enumerate on a Windows system as a virtual COM port.
+The first time a QSB is recognized by the OS, it is assigned a COM port and 
+configured with a latency timer value of 16 msec. To optimize performance, 
+the latency timer should be changed from 16 to 1.  To access the latency timer
+value, open the Device Manager, select the appropriate COM port under the Ports
+(COM & LPT) node, right-click and select properties. Select the Port Settings 
+tab and then click the Advanced... button. From the Latency Timer (msec) 
+drop-down list, select 1 and then click OK.
+
+QSB ON LINUX
+------------------------
+The program depends on a hot/cold-plugging mechanism like udev to map the 
+QSB to a USB-to-serial device. The code assumes that no other USB tty 
+device is present and tries to open /dev/ttyUSB0. This may be a problem in 
+systems where other USB devices are present that also act as UARTs. Linux 
+is not deterministic in assigning node files to the scanned devices upon 
+boot; there is also a possibility that the QSB is plugged later on, when 
+an unknown number of devices may have been connected to the computer.
+
+One way to deal with this issue is by creating a symbolic link in the /dev 
+directory with a  predetermined node name that the code can safely use. 
+For example, /dev/qsb could be a predetermined link that refers to the 
+actual device assigned by the Kernel. The specific ways to do this vary 
+by distribution and by hot-plugging mechanism and are out of the scope 
+of this demo.
+
+An example rules configuration file has been included called 99-usb-serial.rules.
+This file should be placed in the /etc/udev/rules.d directory.
+It is used to map a usb device that have been added to the system with a 
+specific idVendor of 0403 and idProduct of 6001 to a sysmbol link call QSB-DEVICE.
+The demo program assigns the SERIAL_PORT to the QSB-DEVICE symbolic link.
+
+When a QSB device is plugged in, you should see ttyUSB0 and the symbolic link 
+QSB-DEVICE show up in the /dev directory.  
+Type cd /dev to switch to the /dev directory and ls to list the content of the directory.
+
+For information on using udev to create the link automatically at boot or 
+at plug-in time, check the following resources:
+
+  - en.wikipedia.org/wiki/udev
+  - reactivated.net/writing_udev_rules.html
+  - ubuntuforums.org/showthread.php?t=168221
+
+The following values for the QSB may be useful when configuring the 
+hot-plugging mechanism:
+
+  - Vendor ID: 0403
+  - Product ID: 6001
+  
+PERMISSIONS
+-----------
+You may run into permission issues accessing the device.  Rather than granting execute
+permissions to ttyUSB0 or QSB-DEVICE, which comes and goes as the device is plugged
+or unplugged, add yourself to the permission group the ttyUSB0 device belongs to.
+
+To see the groups you are in, type: groups
+
+To see all available groups, type: compgen -g
+We are looking for the groups, tty and dialout. 
+
+To add yourself to the tty group, type: sudo usermod -a -G tty username
+To add yourself to the dialout group, type: sudo usermod -a -G dialout username
+
+RUNNING THE DEMO
+----------------
+
+The code is self contained and does not need anything beyond stdlibc, so 
+the compilation should be straightforward:
+
+	gcc -o qsb-helloworld qsb-helloworld.c
+
+Make sure to plug in the QSB before running the demo to avoid errors due to
+a missing dev node. Depending on your particular setup, some modifications 
+to the code may be necessary.
